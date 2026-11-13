@@ -1,82 +1,51 @@
-import React, { useEffect, useState } from "react";
-import {
-  AppBar,
-  Box,
-  Checkbox,
-  FormControlLabel,
-  Toolbar,
-  Typography,
-} from "@mui/material";
+import React, { useState, useEffect } from "react";
+import { AppBar, Toolbar, Typography } from "@mui/material";
 import { useLocation } from "react-router-dom";
-import fetchModel from "../../lib/fetchModelData";
 import "./styles.css";
+import fetchModel from "../../lib/fetchModelData";
 
-function TopBar({ advancedFeatures, onAdvancedFeaturesChange }) {
+function TopBar() {
   const location = useLocation();
-  const [context, setContext] = useState("");
+  const [contextUser, setContextUser] = useState(null);
+
+  const parts = location.pathname.split("/").filter(Boolean);
+  const viewType = parts[0] || "";
+  const userId = parts[1] || "";
 
   useEffect(() => {
-    const path = location.pathname;
-    if (path.startsWith("/users/")) {
-      const userId = path.split("/")[2];
+    if (userId) {
       fetchModel(`/user/${userId}`)
-        .then((res) => {
-          if (res && res.data) {
-            setContext(`${res.data.first_name} ${res.data.last_name}`);
-          }
-        })
-        .catch(() => setContext(""));
-    } else if (path.startsWith("/photos/")) {
-      const userId = path.split("/")[2];
-      fetchModel(`/user/${userId}`)
-        .then((res) => {
-          if (res && res.data) {
-            setContext(`Photos of ${res.data.first_name} ${res.data.last_name}`);
-          }
-        })
-        .catch(() => setContext(""));
-    } else if (path.startsWith("/comments/")) {
-      const userId = path.split("/")[2];
-      fetchModel(`/user/${userId}`)
-        .then((res) => {
-          if (res && res.data) {
-            setContext(`Comments by ${res.data.first_name} ${res.data.last_name}`);
-          }
-        })
-        .catch(() => setContext(""));
-    } else if (path === "/users") {
-      setContext("User List");
+        .then((res) => setContextUser(res.data))
+        .catch(() => setContextUser(null));
     } else {
-      setContext("");
+      setContextUser(null);
     }
-  }, [location.pathname]);
+  }, [userId]);
+
+  const getContextText = () => {
+    if (contextUser) {
+      const fullName = `${contextUser.first_name} ${contextUser.last_name}`;
+      if (viewType === "users") {
+        return fullName;
+      }
+      if (viewType === "photos") {
+        return `Photos of ${fullName}`;
+      }
+      if (viewType === "comments") {
+        return `Comments of ${fullName}`;
+      }
+    }
+    return "Photo Sharing App";
+  };
 
   return (
     <AppBar className="topbar-appBar" position="fixed">
       <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
-          <Typography variant="h6" component="div">
-            Vũ Quốc Nghĩa - B23DCAT212
-          </Typography>
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={advancedFeatures}
-                onChange={(e) => onAdvancedFeaturesChange(e.target.checked)}
-                sx={{
-                  color: "white",
-                  "&.Mui-checked": {
-                    color: "white",
-                  },
-                }}
-              />
-            }
-            label="Enable Advanced Features"
-            sx={{ color: "white" }}
-          />
-        </Box>
-        <Typography variant="h6" component="div">
-          {context}
+        <Typography variant="h5" color="inherit">
+          Vũ Quốc Nghĩa
+        </Typography>
+        <Typography variant="h5" color="inherit">
+          {getContextText()}
         </Typography>
       </Toolbar>
     </AppBar>
